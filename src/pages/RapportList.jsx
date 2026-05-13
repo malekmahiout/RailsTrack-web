@@ -25,9 +25,14 @@ function RapportCard({ rapport, onDelete }) {
     <article className="card hover:shadow-lg transition-shadow duration-200 cursor-pointer group animate-fade-in">
       <Link to={`/rapports/${rapport.id}`} className="block p-5 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 rounded-xl" aria-label={`Voir le rapport: ${rapport.titre}`}>
         <div className="flex items-start justify-between gap-3 mb-2">
-          <h3 className="font-semibold text-gray-900 text-sm sm:text-base leading-snug group-hover:text-primary-700 transition-colors flex-1 line-clamp-2">
-            {rapport.titre || 'Sans titre'}
-          </h3>
+          <div className="flex-1 min-w-0">
+            {rapport.numero && (
+              <span className="text-xs font-mono text-gray-400 block mb-0.5">{rapport.numero}</span>
+            )}
+            <h3 className="font-semibold text-gray-900 text-sm sm:text-base leading-snug group-hover:text-primary-700 transition-colors line-clamp-2">
+              {rapport.titre || 'Sans titre'}
+            </h3>
+          </div>
           <StatutBadge statut={rapport.statut} />
         </div>
 

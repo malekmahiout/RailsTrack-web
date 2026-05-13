@@ -16,6 +16,14 @@ function nextId(rapports) {
   return rapports.length ? Math.max(...rapports.map(r => r.id)) + 1 : 1
 }
 
+function genNumero(id, date) {
+  const d = new Date(date)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const j = String(d.getDate()).padStart(2, '0')
+  return `INC-${y}${m}${j}-${String(id).padStart(4, '0')}`
+}
+
 export const storageService = {
   lister() {
     return loadAll().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -27,12 +35,15 @@ export const storageService = {
 
   creer(data) {
     const rapports = loadAll()
+    const id = nextId(rapports)
+    const createdAt = new Date().toISOString()
     const rapport = {
       ...data,
-      id: nextId(rapports),
+      id,
+      numero: genNumero(id, createdAt),
       statut: data.statut || 'WAPPR',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt,
+      updatedAt: createdAt,
     }
     rapports.push(rapport)
     saveAll(rapports)

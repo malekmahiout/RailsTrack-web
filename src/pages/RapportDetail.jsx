@@ -64,8 +64,10 @@ export default function RapportDetail() {
   async function handleShare() {
     const description = rapport.contenu?.replace(/<\/?(ul|ol|li|p|br|div|h\d)[^>]*>/gi, '\n').replace(/<[^>]*>/g, '').replace(/\n{3,}/g, '\n\n').trim()
 
-    const lines = [
+    const subject = rapport.numero ? `${rapport.numero} – ${rapport.titre}` : rapport.titre
+    const body = [
       rapport.titre,
+      rapport.numero ? `Référence : ${rapport.numero}` : null,
       `Créé le : ${formatDate(rapport.createdAt)}${rapport.updatedAt !== rapport.createdAt ? `  /  Modifié le : ${formatDate(rapport.updatedAt)}` : ''}`,
       rapport.typeAvarie ? `Type d'avarie : ${rapport.typeAvarie}` : null,
       '',
@@ -84,12 +86,28 @@ export default function RapportDetail() {
     } catch { /* IndexedDB indisponible */ }
 
     if (navigator.share) {
-      const shareData = { title: rapport.titre, text: lines }
-      if (files.length && navigator.canShare?.({ files })) shareData.files = files
-      navigator.share(shareData)
-    } else {
-      navigator.clipboard.writeText(lines).then(() => alert('Copié dans le presse-papiers'))
+      // Tenter avec pièces jointes (iOS 15+, Android Chrome)
+      if (files.length) {
+        try {
+          if (navigator.canShare && navigator.canShare({ files })) {
+            await navigator.share({ title: subject, text: body, files })
+            return
+          }
+        } catch (e) {
+          if (e.name === 'AbortError') return
+        }
+      }
+      // Partage sans fichiers (iOS < 15, navigateurs sans support fichiers)
+      try {
+        await navigator.share({ title: subject, text: body })
+        return
+      } catch (e) {
+        if (e.name === 'AbortError') return
+      }
     }
+
+    // Fallback universel : ouvrir mailto (fonctionne sur iOS Mail, Android, desktop)
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
   }
 
   if (notFound) {
@@ -131,7 +149,7 @@ export default function RapportDetail() {
           </button>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-medium text-gray-400">#{rapport.id}</span>
+              <span className="text-xs font-mono font-medium text-gray-400">{rapport.numero || `#${rapport.id}`}</span>
               <span className={STATUT_CHIPS[getStatutColor(rapport.statut)] || STATUT_CHIPS.default}>
                 {getStatutLabel(rapport.statut)}
               </span>

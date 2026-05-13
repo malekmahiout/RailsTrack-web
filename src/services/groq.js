@@ -31,7 +31,7 @@ export const groqService = {
 
     const hasExisting = existingContenu && existingContenu.trim() !== '' && existingContenu.trim() !== '<p></p>'
     const contenuInstruction = hasExisting
-      ? `Pour le champ "contenu" : complète le contenu existant fourni en ajoutant les informations de la dictée. Ne supprime rien de l'existant, sauf si la dictée demande explicitement de tout remplacer (ex: "remplace", "efface tout", "recommence").`
+      ? `Pour le champ "contenu" : complète le contenu existant en ajoutant la nouvelle dictée à la suite. Commence le bloc ajouté par un titre court en gras (<strong>Titre résumant cette dictée</strong>) pour séparer visuellement les sections. Ne supprime rien de l'existant, sauf si la dictée demande explicitement de tout remplacer (ex: "remplace", "efface tout", "recommence").`
       : `Pour le champ "contenu" : reformule la dictée en HTML structuré avec <ul><li> pour les actions.`
 
     const res = await fetch(`${GROQ_BASE}/openai/v1/chat/completions`, {
