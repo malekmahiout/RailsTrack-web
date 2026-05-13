@@ -6,6 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="RailTrack - Gestion des rapports d'intervention TERPRO" />
     <title>RailTrack – TERPRO</title>
+    <script>
+      // Handle SPA redirect from 404.html
+      (function() {
+        var redirect = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        if (redirect && redirect !== location.href) {
+          history.replaceState(null, null, redirect);
+        }
+        var p = window.location.search.slice(1).split('&').find(function(s){ return s.startsWith('p=/'); });
+        if (p) {
+          var path = '/' + p.slice(3).replace(/~and~/g, '&');
+          history.replaceState(null, null, path + (window.location.hash || ''));
+        }
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
