@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import RichEditor from '../components/RichEditor.jsx'
 import MediaGallery from '../components/MediaGallery.jsx'
 import AudioRecorder from '../components/AudioRecorder.jsx'
@@ -120,7 +120,17 @@ export default function RapportCreate() {
                 <ul className="space-y-1">
                   {similaires.map(s => (
                     <li key={s.id}>
-                      <a href={`/rapports/${s.id}`} className="underline hover:text-orange-900">#{s.id} — {s.titre}</a>
+                      <Link
+                        to={`/rapports/${s.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 underline hover:text-orange-900"
+                      >
+                        #{s.id} — {s.titre}
+                        <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </Link>
                     </li>
                   ))}
                 </ul>
