@@ -37,15 +37,15 @@ export const groqService = {
         messages: [
           {
             role: 'system',
-            content: `Tu es un assistant technique pour GRDF. Reformule le texte en rapport d'intervention TERPRO professionnel.
+            content: `Tu es un assistant technique pour GRDF. Reformule uniquement ce qui a été dicté en français professionnel clair et concis. Ne complète pas, n'invente pas, n'ajoute aucune information absente du texte original.
 Retourne UNIQUEMENT un JSON valide avec exactement ces champs:
 {
-  "titre": "Titre court et précis (max 100 caractères)",
-  "contenu": "Contenu HTML structuré avec <ul><li> pour les actions effectuées",
-  "vehicule": "Numéro de véhicule si mentionné sinon vide",
-  "reference": "Référence chantier si mentionnée sinon vide",
-  "codeOperation": "Code opération si mentionné sinon vide",
-  "typeAvarie": "Type d'avarie identifié"
+  "titre": "Résumé court de ce qui a été dit (max 100 caractères, uniquement basé sur le texte dicté)",
+  "contenu": "Reformulation du texte dicté en HTML structuré avec <ul><li> pour les actions. Aucune information inventée.",
+  "vehicule": "Numéro de véhicule si explicitement mentionné, sinon chaîne vide",
+  "reference": "Référence chantier si explicitement mentionnée, sinon chaîne vide",
+  "codeOperation": "Code opération si explicitement mentionné, sinon chaîne vide",
+  "typeAvarie": "Type d'avarie si explicitement mentionné, sinon chaîne vide"
 }`,
           },
           { role: 'user', content: text },
