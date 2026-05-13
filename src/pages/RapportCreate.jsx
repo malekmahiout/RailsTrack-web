@@ -53,11 +53,15 @@ export default function RapportCreate() {
 
   async function handleTranscription(audioBlob) {
     const rawText = await groqService.transcribeAudio(audioBlob)
-    const parsed = await groqService.reformulerEnTerpro(rawText, contenu)
+    const now = new Date()
+    const ts = now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+      ' à ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    const tsHtml = `<p><strong>Dictée du ${ts}</strong></p>`
+    const hasExisting = contenu && contenu.trim() !== '' && contenu.trim() !== '<p></p>'
+    const parsed = await groqService.reformulerEnTerpro(rawText, hasExisting ? `${contenu}${tsHtml}` : '')
     if (parsed.titre) setTitre(parsed.titre)
-    if (parsed.contenu) setContenu(parsed.contenu)
+    if (parsed.contenu) setContenu(hasExisting ? parsed.contenu : `${tsHtml}${parsed.contenu}`)
     if (parsed.typeAvarie) setTypeAvarie(parsed.typeAvarie)
-
   }
 
   async function handleSave() {
@@ -121,7 +125,7 @@ export default function RapportCreate() {
                   {similaires.map(s => (
                     <li key={s.id}>
                       <Link
-                        to={`/rapports/${s.id}`}
+                        to={`/rapports/${s.id}?fromCreate=1`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 underline hover:text-orange-900"

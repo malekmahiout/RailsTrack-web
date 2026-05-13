@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import RichEditor from '../components/RichEditor.jsx'
 import MediaGallery from '../components/MediaGallery.jsx'
 import AudioRecorder from '../components/AudioRecorder.jsx'
@@ -23,7 +23,9 @@ export default function RapportDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const fromCreate = location.state?.fromCreate
+  const openedFromCreate = searchParams.get('fromCreate') === '1'
 
   const [rapport, setRapport] = useState(null)
   const [editMode, setEditMode] = useState(false)
@@ -46,7 +48,11 @@ export default function RapportDetail() {
 
   async function handleVoiceEdit(audioBlob) {
     const instructions = await groqService.transcribeAudio(audioBlob)
-    const updated = await groqService.editerContenuVocal(contenu, instructions)
+    const now = new Date()
+    const ts = now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+      ' à ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    const tsHtml = `<p><strong>Dictée du ${ts}</strong></p>`
+    const updated = await groqService.editerContenuVocal(`${contenu}${tsHtml}`, instructions)
     setContenu(updated)
   }
 
@@ -139,7 +145,15 @@ export default function RapportDetail() {
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <button
-            onClick={() => fromCreate ? navigate('/rapports') : navigate(-1)}
+            onClick={() => {
+              if (openedFromCreate) {
+                window.close()
+              } else if (fromCreate) {
+                navigate('/rapports')
+              } else {
+                navigate(-1)
+              }
+            }}
             className="btn-icon text-gray-500 hover:bg-gray-200"
             aria-label="Retour"
           >
