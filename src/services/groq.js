@@ -40,7 +40,7 @@ export const groqService = {
             content: `Tu es un assistant technique pour GRDF. Reformule uniquement ce qui a été dicté en français professionnel clair et concis. Ne complète pas, n'invente pas, n'ajoute aucune information absente du texte original.
 Retourne UNIQUEMENT un JSON valide avec exactement ces champs:
 {
-  "titre": "Résumé court de ce qui a été dit (max 100 caractères, uniquement basé sur le texte dicté)",
+  "titre": "Résumé de ce qui a été dit, uniquement basé sur le texte dicté",
   "contenu": "Reformulation du texte dicté en HTML structuré avec <ul><li> pour les actions. Aucune information inventée.",
   "vehicule": "Numéro de véhicule si explicitement mentionné, sinon chaîne vide",
   "reference": "Référence chantier si explicitement mentionnée, sinon chaîne vide",
@@ -107,8 +107,12 @@ Retourne UNIQUEMENT un JSON valide avec exactement ces champs:
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         messages: [
-          { role: 'system', content: 'Tu modifies du contenu HTML selon les instructions vocales. Retourne uniquement le HTML modifié, sans explication.' },
-          { role: 'user', content: `HTML actuel:\n${html}\n\nInstructions: ${instructions}` },
+          { role: 'system', content: `Tu complètes ou modifies du contenu HTML selon ce qui a été dicté. Règles strictes :
+- Par défaut, COMPLÈTE le contenu existant en ajoutant les nouvelles informations dictées (ne supprime rien).
+- Ne remplace le contenu existant QUE si la dictée le demande explicitement (ex: "remplace", "efface tout", "recommence").
+- Ne complète pas, n'invente pas d'informations absentes de la dictée.
+- Retourne uniquement le HTML résultant, sans explication.` },
+          { role: 'user', content: `HTML actuel:\n${html}\n\nDictée: ${instructions}` },
         ],
         temperature: 0.3,
         max_tokens: 2000,
