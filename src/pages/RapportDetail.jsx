@@ -61,12 +61,34 @@ export default function RapportDetail() {
     }
   }
 
-  function handleShare() {
-    const text = `Rapport #${rapport.id}: ${rapport.titre}\n\n${rapport.contenu?.replace(/<[^>]*>/g, ' ')}`
+  async function handleShare() {
+    const description = rapport.contenu?.replace(/<\/?(ul|ol|li|p|br|div|h\d)[^>]*>/gi, '\n').replace(/<[^>]*>/g, '').replace(/\n{3,}/g, '\n\n').trim()
+
+    const lines = [
+      rapport.titre,
+      `Créé le : ${formatDate(rapport.createdAt)}${rapport.updatedAt !== rapport.createdAt ? `  /  Modifié le : ${formatDate(rapport.updatedAt)}` : ''}`,
+      rapport.typeAvarie ? `Type d'avarie : ${rapport.typeAvarie}` : null,
+      '',
+      description,
+    ].filter(l => l !== null).join('\n')
+
+    let files = []
+    try {
+      const medias = await mediaDbService.listerPourRapport(String(rapport.id))
+      files = medias.map(m => {
+        const [header, b64] = m.data.split(',')
+        const mime = header.match(/:(.*?);/)?.[1] || m.type
+        const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0))
+        return new File([bytes], m.name, { type: mime })
+      })
+    } catch { /* IndexedDB indisponible */ }
+
     if (navigator.share) {
-      navigator.share({ title: rapport.titre, text })
+      const shareData = { title: rapport.titre, text: lines }
+      if (files.length && navigator.canShare?.({ files })) shareData.files = files
+      navigator.share(shareData)
     } else {
-      navigator.clipboard.writeText(text).then(() => alert('Copié dans le presse-papiers'))
+      navigator.clipboard.writeText(lines).then(() => alert('Copié dans le presse-papiers'))
     }
   }
 
