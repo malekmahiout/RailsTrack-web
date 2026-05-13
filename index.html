@@ -17,7 +17,8 @@
         var p = window.location.search.slice(1).split('&').find(function(s){ return s.startsWith('p=/'); });
         if (p) {
           var path = '/' + p.slice(3).replace(/~and~/g, '&');
-          history.replaceState(null, null, path + (window.location.hash || ''));
+          var base = window.location.pathname.replace(/\/$/, '');
+          history.replaceState(null, null, base + path + (window.location.hash || ''));
         }
       })();
     </script>
