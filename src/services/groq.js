@@ -69,7 +69,7 @@ Retourne UNIQUEMENT un JSON valide avec exactement ces champs:
     const apiKey = groqService.getApiKey()
     if (!apiKey || !rapports.length) return []
 
-    const sample = rapports.slice(0, 50).map(r => ({ id: r.id, titre: r.titre }))
+    const sample = rapports.map(r => ({ id: r.id, titre: r.titre }))
     const res = await fetch(`${GROQ_BASE}/openai/v1/chat/completions`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
