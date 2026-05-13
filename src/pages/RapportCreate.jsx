@@ -53,7 +53,7 @@ export default function RapportCreate() {
 
   async function handleTranscription(audioBlob) {
     const rawText = await groqService.transcribeAudio(audioBlob)
-    const parsed = await groqService.reformulerEnTerpro(rawText)
+    const parsed = await groqService.reformulerEnTerpro(rawText, contenu)
     if (parsed.titre) setTitre(parsed.titre)
     if (parsed.contenu) setContenu(parsed.contenu)
     if (parsed.typeAvarie) setTypeAvarie(parsed.typeAvarie)

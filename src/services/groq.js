@@ -25,9 +25,14 @@ export const groqService = {
     return data.text || ''
   },
 
-  async reformulerEnTerpro(text) {
+  async reformulerEnTerpro(text, existingContenu = '') {
     const apiKey = groqService.getApiKey()
     if (!apiKey) throw new Error('Clé API Groq manquante.')
+
+    const hasExisting = existingContenu && existingContenu.trim() !== '' && existingContenu.trim() !== '<p></p>'
+    const contenuInstruction = hasExisting
+      ? `Pour le champ "contenu" : complète le contenu existant fourni en ajoutant les informations de la dictée. Ne supprime rien de l'existant, sauf si la dictée demande explicitement de tout remplacer (ex: "remplace", "efface tout", "recommence").`
+      : `Pour le champ "contenu" : reformule la dictée en HTML structuré avec <ul><li> pour les actions.`
 
     const res = await fetch(`${GROQ_BASE}/openai/v1/chat/completions`, {
       method: 'POST',
@@ -38,17 +43,23 @@ export const groqService = {
           {
             role: 'system',
             content: `Tu es un assistant technique pour GRDF. Reformule uniquement ce qui a été dicté en français professionnel clair et concis. Ne complète pas, n'invente pas, n'ajoute aucune information absente du texte original.
+${contenuInstruction}
 Retourne UNIQUEMENT un JSON valide avec exactement ces champs:
 {
   "titre": "Résumé de ce qui a été dit, uniquement basé sur le texte dicté",
-  "contenu": "Reformulation du texte dicté en HTML structuré avec <ul><li> pour les actions. Aucune information inventée.",
+  "contenu": "HTML résultant (existant complété ou remplacé selon la dictée)",
   "vehicule": "Numéro de véhicule si explicitement mentionné, sinon chaîne vide",
   "reference": "Référence chantier si explicitement mentionnée, sinon chaîne vide",
   "codeOperation": "Code opération si explicitement mentionné, sinon chaîne vide",
   "typeAvarie": "Type d'avarie si explicitement mentionné, sinon chaîne vide"
 }`,
           },
-          { role: 'user', content: text },
+          {
+            role: 'user',
+            content: hasExisting
+              ? `Contenu existant:\n${existingContenu}\n\nDictée à intégrer: ${text}`
+              : text,
+          },
         ],
         temperature: 0.3,
         max_tokens: 1000,

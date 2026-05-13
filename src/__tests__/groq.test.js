@@ -77,6 +77,33 @@ describe('groqService', () => {
       const result = await groqService.reformulerEnTerpro('test fallback')
       expect(result).toBeDefined()
     })
+
+    it('inclut le contenu existant dans le message user quand fourni', async () => {
+      groqService.setApiKey('gsk_fake_key')
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: JSON.stringify({ titre: 'T', contenu: '<p>existant + nouveau</p>' }) } }],
+        }),
+      })
+      await groqService.reformulerEnTerpro('nouveau texte dicté', '<p>contenu existant</p>')
+      const body = JSON.parse(global.fetch.mock.calls[0][1].body)
+      expect(body.messages[1].content).toContain('contenu existant')
+      expect(body.messages[1].content).toContain('nouveau texte dicté')
+    })
+
+    it('n\'inclut pas le contenu existant si vide', async () => {
+      groqService.setApiKey('gsk_fake_key')
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: JSON.stringify({ titre: 'T', contenu: '<p>test</p>' }) } }],
+        }),
+      })
+      await groqService.reformulerEnTerpro('texte dicté', '')
+      const body = JSON.parse(global.fetch.mock.calls[0][1].body)
+      expect(body.messages[1].content).toBe('texte dicté')
+    })
   })
 
   describe('trouverTicketsSimilaires', () => {
