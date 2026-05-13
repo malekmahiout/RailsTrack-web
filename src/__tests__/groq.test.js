@@ -109,6 +109,23 @@ describe('groqService', () => {
       expect(result.map(r => r.id)).toEqual(expect.arrayContaining([1, 3]))
     })
 
+    it('gère les IDs retournés en string par le modèle', async () => {
+      groqService.setApiKey('gsk_fake_key')
+      const rapports = [
+        { id: 1, titre: 'Fuite gaz rue Victor Hugo' },
+        { id: 2, titre: 'Coupure électrique secteur nord' },
+      ]
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: JSON.stringify({ similaires: ['1'] }) } }],
+        }),
+      })
+      const result = await groqService.trouverTicketsSimilaires('fuite gaz', rapports)
+      expect(result).toHaveLength(1)
+      expect(result[0].id).toBe(1)
+    })
+
     it('retourne un tableau vide si la requête échoue', async () => {
       groqService.setApiKey('gsk_fake_key')
       global.fetch = vi.fn().mockResolvedValueOnce({ ok: false, status: 500 })

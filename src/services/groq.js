@@ -78,7 +78,7 @@ Retourne UNIQUEMENT un JSON valide avec exactement ces champs:
         messages: [
           {
             role: 'system',
-            content: 'Détecte les doublons potentiels. Retourne un JSON: { "similaires": [id1, id2] } avec les IDs des tickets similaires. Retourne [] si aucun.',
+            content: 'Détecte les doublons potentiels. Retourne UNIQUEMENT un JSON valide: { "similaires": [1, 2] } avec les IDs numériques entiers des tickets similaires. Retourne { "similaires": [] } si aucun.',
           },
           { role: 'user', content: `Nouveau: "${description}"\n\nExistants:\n${JSON.stringify(sample)}` },
         ],
@@ -90,8 +90,8 @@ Retourne UNIQUEMENT un JSON valide avec exactement ces champs:
     const data = await res.json()
     try {
       const parsed = JSON.parse(data.choices?.[0]?.message?.content || '{}')
-      const ids = parsed.similaires || []
-      return rapports.filter(r => ids.includes(r.id))
+      const ids = (parsed.similaires || []).map(Number)
+      return rapports.filter(r => ids.includes(Number(r.id)))
     } catch {
       return []
     }
