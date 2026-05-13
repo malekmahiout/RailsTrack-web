@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import RichEditor from '../components/RichEditor.jsx'
 import MediaGallery from '../components/MediaGallery.jsx'
@@ -33,7 +33,7 @@ export default function RapportCreate() {
 
   useEffect(() => {
     saveSession({ titre, contenu, typeAvarie, statut })
-  }, [titre, contenu, vehicule, reference, codeOperation, typeAvarie, statut])
+  }, [titre, contenu, typeAvarie, statut])
 
   async function handleTranscription(audioBlob) {
     const rawText = await groqService.transcribeAudio(audioBlob)
