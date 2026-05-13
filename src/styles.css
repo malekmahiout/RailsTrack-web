@@ -1,0 +1,177 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --primary: #1a237e;
+    --primary-light: #3949ab;
+    --primary-dark: #0d1257;
+    --accent: #f57c00;
+    --bg: #f0f2f5;
+    --surface: #ffffff;
+    --text: #1a1a2e;
+    --text-secondary: #6b7280;
+    --border: #e5e7eb;
+    --danger: #ef4444;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 16px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary-900 text-white hover:bg-primary-700 focus:ring-primary-500 shadow-md hover:shadow-lg active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply btn bg-white text-primary-900 border border-gray-200 hover:bg-gray-50 focus:ring-primary-500 shadow-sm;
+  }
+
+  .btn-danger {
+    @apply btn bg-red-500 text-white hover:bg-red-600 focus:ring-red-400 shadow-md;
+  }
+
+  .btn-ghost {
+    @apply btn text-gray-600 hover:bg-gray-100 focus:ring-gray-400;
+  }
+
+  .btn-icon {
+    @apply p-2.5 rounded-lg transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden;
+  }
+
+  .input {
+    @apply w-full px-4 py-3 rounded-lg border border-gray-200 bg-white text-gray-900 text-sm placeholder-gray-400
+      focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+      transition-all duration-200 disabled:bg-gray-50 disabled:cursor-not-allowed;
+  }
+
+  .label {
+    @apply block text-sm font-semibold text-gray-700 mb-1.5;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+
+  .chip-primary {
+    @apply badge bg-primary-50 text-primary-900;
+  }
+
+  .chip-success {
+    @apply badge bg-green-50 text-green-800;
+  }
+
+  .chip-warning {
+    @apply badge bg-amber-50 text-amber-800;
+  }
+
+  .chip-danger {
+    @apply badge bg-red-50 text-red-700;
+  }
+
+  .fab {
+    @apply fixed bottom-6 right-6 w-14 h-14 rounded-full bg-primary-900 text-white shadow-xl
+      flex items-center justify-center cursor-pointer
+      transition-all duration-200 hover:bg-primary-700 hover:shadow-2xl hover:scale-105
+      focus:outline-none focus:ring-4 focus:ring-primary-300 active:scale-95
+      z-50;
+  }
+
+  .page-header {
+    @apply bg-white border-b border-gray-100 shadow-sm sticky top-0 z-40;
+  }
+
+  .page-content {
+    @apply max-w-3xl mx-auto px-4 py-6 sm:px-6;
+  }
+
+  .section-title {
+    @apply text-lg font-bold text-gray-900 mb-4;
+  }
+
+  .spinner {
+    @apply animate-spin rounded-full border-2 border-current border-t-transparent;
+  }
+
+  .record-pulse {
+    animation: recordPulse 1.5s ease-in-out infinite;
+  }
+
+  .rich-editor {
+    @apply min-h-[200px] p-4 border border-gray-200 rounded-lg bg-white text-sm text-gray-800 outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+    line-height: 1.7;
+  }
+
+  .rich-editor:empty::before {
+    content: attr(data-placeholder);
+    color: #9ca3af;
+    pointer-events: none;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 9999px;
+  }
+}
+
+@keyframes recordPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(239,68,68,0); }
+}
