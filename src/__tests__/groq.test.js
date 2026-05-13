@@ -90,5 +90,40 @@ describe('groqService', () => {
       const result = await groqService.trouverTicketsSimilaires('desc', [])
       expect(result).toEqual([])
     })
+
+    it('retourne les rapports correspondant aux IDs similaires', async () => {
+      groqService.setApiKey('gsk_fake_key')
+      const rapports = [
+        { id: 1, titre: 'Fuite gaz rue Victor Hugo' },
+        { id: 2, titre: 'Coupure électrique secteur nord' },
+        { id: 3, titre: 'Fuite gaz avenue de la Paix' },
+      ]
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: JSON.stringify({ similaires: [1, 3] }) } }],
+        }),
+      })
+      const result = await groqService.trouverTicketsSimilaires('fuite gaz', rapports)
+      expect(result).toHaveLength(2)
+      expect(result.map(r => r.id)).toEqual(expect.arrayContaining([1, 3]))
+    })
+
+    it('retourne un tableau vide si la requête échoue', async () => {
+      groqService.setApiKey('gsk_fake_key')
+      global.fetch = vi.fn().mockResolvedValueOnce({ ok: false, status: 500 })
+      const result = await groqService.trouverTicketsSimilaires('test', [{ id: 1, titre: 'Test' }])
+      expect(result).toEqual([])
+    })
+
+    it('retourne un tableau vide si la réponse JSON est invalide', async () => {
+      groqService.setApiKey('gsk_fake_key')
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ choices: [{ message: { content: 'texte non JSON' } }] }),
+      })
+      const result = await groqService.trouverTicketsSimilaires('test', [{ id: 1, titre: 'Test' }])
+      expect(result).toEqual([])
+    })
   })
 })

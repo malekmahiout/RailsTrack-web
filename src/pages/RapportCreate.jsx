@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import RichEditor from '../components/RichEditor.jsx'
 import MediaGallery from '../components/MediaGallery.jsx'
@@ -30,10 +30,26 @@ export default function RapportCreate() {
   const [similaires, setSimilaires] = useState([])
   const [saving, setSaving] = useState(false)
   const navigate = useNavigate()
+  const debounceRef = useRef(null)
 
   useEffect(() => {
     saveSession({ titre, contenu, typeAvarie, statut })
   }, [titre, contenu, typeAvarie, statut])
+
+  useEffect(() => {
+    if (!groqService.getApiKey() || titre.trim().length < 3) {
+      setSimilaires([])
+      return
+    }
+    clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(async () => {
+      const all = storageService.lister()
+      if (!all.length) return
+      const sims = await groqService.trouverTicketsSimilaires(titre.trim(), all)
+      setSimilaires(sims)
+    }, 600)
+    return () => clearTimeout(debounceRef.current)
+  }, [titre])
 
   async function handleTranscription(audioBlob) {
     const rawText = await groqService.transcribeAudio(audioBlob)
@@ -42,11 +58,6 @@ export default function RapportCreate() {
     if (parsed.contenu) setContenu(parsed.contenu)
     if (parsed.typeAvarie) setTypeAvarie(parsed.typeAvarie)
 
-    const all = storageService.lister()
-    if (parsed.titre || rawText) {
-      const sims = await groqService.trouverTicketsSimilaires(parsed.titre || rawText, all)
-      setSimilaires(sims)
-    }
   }
 
   async function handleSave() {
