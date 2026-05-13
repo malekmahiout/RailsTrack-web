@@ -2,7 +2,7 @@ const API_KEY_STORAGE = 'railtrack_groq_api_key'
 const GROQ_BASE = 'https://api.groq.com'
 
 export const groqService = {
-  getApiKey: () => localStorage.getItem(API_KEY_STORAGE) || '',
+  getApiKey: () => localStorage.getItem(API_KEY_STORAGE) || import.meta.env.VITE_GROQ_API_KEY || '',
   setApiKey: key => localStorage.setItem(API_KEY_STORAGE, key),
 
   async transcribeAudio(audioBlob) {
