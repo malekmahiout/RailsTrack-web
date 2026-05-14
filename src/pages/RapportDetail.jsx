@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
+import { useState, useEffect, useMemo } from 'react'
+import { useParams, useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom'
 import RichEditor from '../components/RichEditor.jsx'
-import MediaGallery from '../components/MediaGallery.jsx'
 import AudioRecorder from '../components/AudioRecorder.jsx'
 import { storageService } from '../services/storage.js'
 import { groqService } from '../services/groq.js'
-import { AVARIE_TYPES, getStatutLabel, getStatutColor } from '../constants/avariesTypes.js'
+import { getStatutLabel, getStatutColor } from '../constants/avariesTypes.js'
 
 const STATUT_CHIPS = {
   success: 'chip-success',
@@ -17,6 +16,11 @@ const STATUT_CHIPS = {
 function formatDate(iso) {
   if (!iso) return ''
   return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+function formatDateCourt(iso) {
+  if (!iso) return ''
+  return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 export default function RapportDetail() {
@@ -31,10 +35,16 @@ export default function RapportDetail() {
   const [editMode, setEditMode] = useState(false)
   const [titre, setTitre] = useState('')
   const [contenu, setContenu] = useState('')
-  const [typeAvarie, setTypeAvarie] = useState('')
+  const [vehicule, setVehicule] = useState('')
   const [statut, setStatut] = useState('')
   const [saving, setSaving] = useState(false)
   const [notFound, setNotFound] = useState(false)
+
+  // ← useMemo AVANT les early returns
+  const similaires = useMemo(
+    () => rapport ? storageService.trouverSimilaires(rapport, 5) : [],
+    [rapport]
+  )
 
   useEffect(() => {
     const r = storageService.trouver(id)
@@ -42,7 +52,7 @@ export default function RapportDetail() {
     setRapport(r)
     setTitre(r.titre || '')
     setContenu(r.contenu || '')
-    setTypeAvarie(r.typeAvarie || '')
+    setVehicule(r.vehicule || '')
     setStatut(r.statut || 'WAPPR')
   }, [id])
 
@@ -59,7 +69,7 @@ export default function RapportDetail() {
   async function handleSave() {
     setSaving(true)
     try {
-      const updated = storageService.modifier(id, { titre, contenu, typeAvarie, statut })
+      const updated = storageService.modifier(id, { titre, contenu, vehicule, statut })
       setRapport(updated)
       setEditMode(false)
     } finally {
@@ -69,41 +79,16 @@ export default function RapportDetail() {
 
   async function handleShare() {
     const description = rapport.contenu?.replace(/<\/?(ul|ol|li|p|br|div|h\d)[^>]*>/gi, '\n').replace(/<[^>]*>/g, '').replace(/\n{3,}/g, '\n\n').trim()
-
     const subject = rapport.numero ? `${rapport.numero} – ${rapport.titre}` : rapport.titre
     const body = [
       rapport.titre,
       rapport.numero ? `Référence : ${rapport.numero}` : null,
       `Créé le : ${formatDate(rapport.createdAt)}${rapport.updatedAt !== rapport.createdAt ? `  /  Modifié le : ${formatDate(rapport.updatedAt)}` : ''}`,
-      rapport.typeAvarie ? `Type d'avarie : ${rapport.typeAvarie}` : null,
       '',
       description,
     ].filter(l => l !== null).join('\n')
 
-    let files = []
-    try {
-      const medias = await mediaDbService.listerPourRapport(String(rapport.id))
-      files = medias.map(m => {
-        const [header, b64] = m.data.split(',')
-        const mime = header.match(/:(.*?);/)?.[1] || m.type
-        const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0))
-        return new File([bytes], m.name, { type: mime })
-      })
-    } catch { /* IndexedDB indisponible */ }
-
     if (navigator.share) {
-      // Tenter avec pièces jointes (iOS 15+, Android Chrome)
-      if (files.length) {
-        try {
-          if (navigator.canShare && navigator.canShare({ files })) {
-            await navigator.share({ title: subject, text: body, files })
-            return
-          }
-        } catch (e) {
-          if (e.name === 'AbortError') return
-        }
-      }
-      // Partage sans fichiers (iOS < 15, navigateurs sans support fichiers)
       try {
         await navigator.share({ title: subject, text: body })
         return
@@ -111,8 +96,6 @@ export default function RapportDetail() {
         if (e.name === 'AbortError') return
       }
     }
-
-    // Fallback universel : ouvrir mailto (fonctionne sur iOS Mail, Android, desktop)
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
   }
 
@@ -214,11 +197,8 @@ export default function RapportDetail() {
                 <input id="detail-titre" type="text" value={titre} onChange={e => setTitre(e.target.value)} className="input" />
               </div>
               <div>
-                <label htmlFor="detail-avarie" className="label">Type d'avarie</label>
-                <select id="detail-avarie" value={typeAvarie} onChange={e => setTypeAvarie(e.target.value)} className="input">
-                  <option value="">Sélectionner...</option>
-                  {AVARIE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
+                <label htmlFor="detail-vehicule" className="label">Véhicule</label>
+                <input id="detail-vehicule" type="text" value={vehicule} onChange={e => setVehicule(e.target.value)} className="input" placeholder="Numéro ou nom du véhicule" />
               </div>
               <div>
                 <label className="label">Statut</label>
@@ -238,7 +218,7 @@ export default function RapportDetail() {
           ) : (
             <dl className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {[
-                { label: 'Type d\'avarie', value: rapport.typeAvarie },
+                { label: 'Véhicule', value: rapport.vehicule },
                 { label: 'Créé le', value: formatDate(rapport.createdAt) },
                 { label: 'Modifié le', value: formatDate(rapport.updatedAt) },
               ].filter(f => f.value).map(f => (
@@ -251,7 +231,7 @@ export default function RapportDetail() {
           )}
         </div>
 
-        {/* Voice edit (edit mode only) */}
+        {/* Voice edit */}
         {editMode && hasApiKey && (
           <div className="card p-5 mb-5 text-center">
             <h2 className="section-title text-center text-sm mb-1">Édition vocale</h2>
@@ -270,10 +250,46 @@ export default function RapportDetail() {
           )}
         </div>
 
-        {/* Media */}
-        <div className="card p-6 mb-6">
-          <h2 className="section-title">Photos et vidéos</h2>
-          <MediaGallery rapportId={String(rapport.id)} readOnly={!editMode} />
+        {/* Incidents similaires */}
+        <div className="card p-5 mb-5">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="section-title mb-0">Incidents similaires</h2>
+            {similaires.length > 0 && (
+              <Link
+                to={`/rapports/${rapport.id}/similaires`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-primary-700 hover:underline font-medium"
+              >
+                Voir tous →
+              </Link>
+            )}
+          </div>
+          {similaires.length === 0 ? (
+            <p className="text-sm text-gray-400">Aucun incident similaire trouvé.</p>
+          ) : (
+            <ul className="space-y-1">
+              {similaires.map(r => (
+                <li key={r.id}>
+                  <Link
+                    to={`/rapports/${r.id}`}
+                    className="flex items-start justify-between gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors group"
+                  >
+                    <div className="flex-1 min-w-0">
+                      {r.numero && (
+                        <span className="text-xs font-mono text-gray-400 block">{r.numero}</span>
+                      )}
+                      <p className="text-sm font-medium text-gray-800 group-hover:text-primary-700 truncate">{r.titre || 'Sans titre'}</p>
+                      {r.vehicule && (
+                        <p className="text-xs text-gray-400">Véhicule : {r.vehicule}</p>
+                      )}
+                    </div>
+                    <time className="text-xs text-gray-400 shrink-0 pt-0.5">{formatDateCourt(r.createdAt)}</time>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         {/* Save */}

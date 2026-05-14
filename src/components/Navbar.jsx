@@ -1,4 +1,4 @@
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { authService } from '../services/auth.js'
 
 function RailTrackIcon() {
@@ -11,21 +11,9 @@ function RailTrackIcon() {
   )
 }
 
-const NAV_ITEMS = [
-  {
-    to: '/rapports',
-    label: 'Rapports',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
-    ),
-  },
-]
 
 export default function Navbar() {
   const navigate = useNavigate()
-  const location = useLocation()
   const user = authService.getCurrentUser()
 
   function handleLogout() {
@@ -43,24 +31,6 @@ export default function Navbar() {
             <span className="font-bold text-lg text-primary-900 hidden sm:block">RailTrack</span>
           </Link>
 
-          {/* Nav */}
-          <nav className="flex items-center gap-1" aria-label="Navigation principale">
-            {NAV_ITEMS.map(item => {
-              const active = location.pathname.startsWith(item.to)
-              return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
-                    ${active ? 'bg-primary-50 text-primary-900' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  {item.icon}
-                  <span className="hidden sm:block">{item.label}</span>
-                </Link>
-              )
-            })}
-          </nav>
 
           {/* User + Logout */}
           <div className="flex items-center gap-2">

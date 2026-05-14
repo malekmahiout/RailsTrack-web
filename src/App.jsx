@@ -5,6 +5,8 @@ import Login from './pages/Login.jsx'
 import RapportList from './pages/RapportList.jsx'
 import RapportCreate from './pages/RapportCreate.jsx'
 import RapportDetail from './pages/RapportDetail.jsx'
+import RapportShare from './pages/RapportShare.jsx'
+import IncidentsSimilaires from './pages/IncidentsSimilaires.jsx'
 import Settings from './pages/Settings.jsx'
 
 function ProtectedLayout() {
@@ -27,6 +29,8 @@ export default function App() {
           <Route path="/rapports" element={<RapportList />} />
           <Route path="/rapports/nouveau" element={<RapportCreate />} />
           <Route path="/rapports/:id" element={<RapportDetail />} />
+          <Route path="/rapports/:id/similaires" element={<IncidentsSimilaires />} />
+          <Route path="/rapport-partage" element={<RapportShare />} />
           <Route path="/parametres" element={<Settings />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

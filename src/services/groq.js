@@ -50,8 +50,7 @@ Retourne UNIQUEMENT un JSON valide avec exactement ces champs:
   "contenu": "HTML résultant (existant complété ou remplacé selon la dictée)",
   "vehicule": "Numéro de véhicule si explicitement mentionné, sinon chaîne vide",
   "reference": "Référence chantier si explicitement mentionnée, sinon chaîne vide",
-  "codeOperation": "Code opération si explicitement mentionné, sinon chaîne vide",
-  "typeAvarie": "Type d'avarie si explicitement mentionné, sinon chaîne vide"
+  "codeOperation": "Code opération si explicitement mentionné, sinon chaîne vide"
 }`,
           },
           {
@@ -73,6 +72,62 @@ Retourne UNIQUEMENT un JSON valide avec exactement ces champs:
     } catch {
       const match = content.match(/\{[\s\S]*\}/)
       return match ? JSON.parse(match[0]) : { titre: text.slice(0, 100), contenu: `<p>${text}</p>` }
+    }
+  },
+
+  async analyserImageIncidents(imageBase64) {
+    const apiKey = groqService.getApiKey()
+    if (!apiKey) throw new Error('Clé API Groq manquante.')
+
+    const res = await fetch(`${GROQ_BASE}/openai/v1/chat/completions`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: `Analyse cette image d'un document de rapport GRDF/TERPRO.
+
+ÉTAPE 1 — Cherche la section intitulée "Action" dans le document.
+Si elle existe et contient des lignes, chaque ligne contient un numéro d'incident (format quelconque : alphanumérique, avec ou sans tirets) suivi de sa description sur la même ligne, à droite du numéro.
+
+ÉTAPE 2 — Si la section "Action" est absente ou ne contient aucun incident, analyse l'ensemble du document pour en extraire :
+- Un ou plusieurs numéros d'incident (toute référence alphanumérique identifiable comme un identifiant d'incident)
+- Une description courte pour chacun (résumé en quelques mots du contenu du document)
+- Le nom ou numéro du véhicule
+
+Retourne UNIQUEMENT un JSON valide, sans aucun texte autour :
+{
+  "vehicule": "nom ou numéro du véhicule visible dans le document, chaîne vide si non trouvé",
+  "incidents": [
+    { "numero": "numéro exact de l'incident tel qu'il apparaît", "description": "description courte" }
+  ]
+}
+Si aucun incident n'est identifiable dans le document, retourne "incidents": [].`,
+              },
+              {
+                type: 'image_url',
+                image_url: { url: imageBase64 },
+              },
+            ],
+          },
+        ],
+        temperature: 0.1,
+        max_tokens: 1000,
+      }),
+    })
+    if (!res.ok) throw new Error(`Erreur analyse image: ${res.status}`)
+    const data = await res.json()
+    const content = data.choices?.[0]?.message?.content || '{}'
+    try {
+      return JSON.parse(content)
+    } catch {
+      const match = content.match(/\{[\s\S]*\}/)
+      return match ? JSON.parse(match[0]) : { vehicule: '', incidents: [] }
     }
   },
 

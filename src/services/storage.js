@@ -59,6 +59,68 @@ export const storageService = {
     return rapports[idx]
   },
 
+  trouverSimilaires(rapport, limit = null) {
+    const tous = loadAll()
+    const vehicule = rapport.vehicule?.toLowerCase().trim() || ''
+
+    const mots = str =>
+      new Set((str || '').toLowerCase().split(/[\s\-_.,;:!?/()\[\]]+/).filter(m => m.length > 2))
+
+    const motsCourants = mots(rapport.titre)
+
+    const scored = tous
+      .filter(r => r.id !== rapport.id)
+      .map(r => {
+        const sameVehicule = vehicule && r.vehicule?.toLowerCase().trim() === vehicule ? 2 : 0
+        const motsR = mots(r.titre)
+        const inter = [...motsCourants].filter(m => motsR.has(m)).length
+        const union = new Set([...motsCourants, ...motsR]).size
+        const titleScore = union > 0 ? inter / union : 0
+        return { rapport: r, score: sameVehicule + titleScore }
+      })
+      .sort((a, b) => b.score - a.score)
+
+    const result = limit ? scored.slice(0, limit) : scored
+    return result.map(s => s.rapport)
+  },
+
+  listerActifsLeJour(dateStr) {
+    const debut = new Date(dateStr)
+    const fin = new Date(dateStr + 'T23:59:59')
+    return loadAll()
+      .filter(r => {
+        const created = r.createdAt ? new Date(r.createdAt) : null
+        const updated = r.updatedAt ? new Date(r.updatedAt) : null
+        return (created && created >= debut && created <= fin) ||
+               (updated && updated >= debut && updated <= fin)
+      })
+      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+  },
+
+  listerParPlageDates(dateDebut, dateFin) {
+    const debut = dateDebut ? new Date(dateDebut) : null
+    const fin = dateFin ? new Date(dateFin + 'T23:59:59') : null
+    return loadAll()
+      .filter(r => {
+        const d = r.createdAt ? new Date(r.createdAt) : null
+        if (!d) return false
+        if (debut && d < debut) return false
+        if (fin && d > fin) return false
+        return true
+      })
+      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+  },
+
+  trouverParTitre(titre) {
+    if (!titre) return null
+    const t = titre.trim().toLowerCase()
+    return loadAll().find(r => (r.titre || '').trim().toLowerCase() === t) || null
+  },
+
+  existeAvecTitre(titre) {
+    return !!this.trouverParTitre(titre)
+  },
+
   supprimer(id) {
     const rapports = loadAll()
     const filtered = rapports.filter(r => r.id !== Number(id))

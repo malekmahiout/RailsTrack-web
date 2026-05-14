@@ -1,14 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import RichEditor from '../components/RichEditor.jsx'
-import MediaGallery from '../components/MediaGallery.jsx'
 import AudioRecorder from '../components/AudioRecorder.jsx'
 import { groqService } from '../services/groq.js'
 import { storageService } from '../services/storage.js'
-import { mediaDbService } from '../services/mediaDb.js'
-import { AVARIE_TYPES } from '../constants/avariesTypes.js'
 
-const TEMP_RAPPORT_ID = 'temp_new'
 const SESSION_KEY = 'railtrack_create_session'
 
 function loadSession() {
@@ -25,16 +21,16 @@ export default function RapportCreate() {
   const session = loadSession()
   const [titre, setTitre] = useState(session?.titre || '')
   const [contenu, setContenu] = useState(session?.contenu || '')
-  const [typeAvarie, setTypeAvarie] = useState(session?.typeAvarie || '')
   const [statut, setStatut] = useState(session?.statut || 'WAPPR')
   const [similaires, setSimilaires] = useState([])
   const [saving, setSaving] = useState(false)
+  const [duplicateError, setDuplicateError] = useState('')
   const navigate = useNavigate()
   const debounceRef = useRef(null)
 
   useEffect(() => {
-    saveSession({ titre, contenu, typeAvarie, statut })
-  }, [titre, contenu, typeAvarie, statut])
+    saveSession({ titre, contenu, statut })
+  }, [titre, contenu, statut])
 
   useEffect(() => {
     if (!groqService.getApiKey() || titre.trim().length < 3) {
@@ -61,15 +57,18 @@ export default function RapportCreate() {
     const parsed = await groqService.reformulerEnTerpro(rawText, hasExisting ? `${contenu}${tsHtml}` : '')
     if (parsed.titre) setTitre(parsed.titre)
     if (parsed.contenu) setContenu(hasExisting ? parsed.contenu : `${tsHtml}${parsed.contenu}`)
-    if (parsed.typeAvarie) setTypeAvarie(parsed.typeAvarie)
   }
 
   async function handleSave() {
     if (!titre.trim()) return
+    if (storageService.existeAvecTitre(titre.trim())) {
+      setDuplicateError('Un incident avec ce titre existe déjà.')
+      return
+    }
+    setDuplicateError('')
     setSaving(true)
     try {
-      const rapport = storageService.creer({ titre: titre.trim(), contenu, typeAvarie, statut })
-      await mediaDbService.migrerVersRapport(TEMP_RAPPORT_ID, rapport.id)
+      const rapport = storageService.creer({ titre: titre.trim(), contenu, statut })
       clearSession()
       navigate(`/rapports/${rapport.id}`, { state: { fromCreate: true } })
     } finally {
@@ -125,15 +124,10 @@ export default function RapportCreate() {
                   {similaires.map(s => (
                     <li key={s.id}>
                       <Link
-                        to={`/rapports/${s.id}?fromCreate=1`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        to={`/rapports/${s.id}`}
                         className="inline-flex items-center gap-1 underline hover:text-orange-900"
                       >
                         #{s.id} — {s.titre}
-                        <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
                       </Link>
                     </li>
                   ))}
@@ -167,20 +161,16 @@ export default function RapportCreate() {
               id="titre"
               type="text"
               value={titre}
-              onChange={e => setTitre(e.target.value)}
-              className="input"
+              onChange={e => { setTitre(e.target.value); setDuplicateError('') }}
+              className={`input ${duplicateError ? 'border-red-400 focus:ring-red-400' : ''}`}
               placeholder="Titre de l'intervention"
               required
               aria-required="true"
+              aria-describedby={duplicateError ? 'titre-error' : undefined}
             />
-          </div>
-
-          <div>
-            <label htmlFor="typeAvarie" className="label">Type d'avarie</label>
-            <select id="typeAvarie" value={typeAvarie} onChange={e => setTypeAvarie(e.target.value)} className="input">
-              <option value="">Sélectionner...</option>
-              {AVARIE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
+            {duplicateError && (
+              <p id="titre-error" role="alert" className="mt-1 text-xs text-red-600">{duplicateError}</p>
+            )}
           </div>
 
           <div>
@@ -215,12 +205,6 @@ export default function RapportCreate() {
         <div className="card p-6 mb-5">
           <h2 className="section-title">Contenu de l'intervention</h2>
           <RichEditor value={contenu} onChange={setContenu} placeholder="Décrivez les actions effectuées..." />
-        </div>
-
-        {/* Media */}
-        <div className="card p-6 mb-6">
-          <h2 className="section-title">Photos et vidéos</h2>
-          <MediaGallery rapportId={TEMP_RAPPORT_ID} readOnly={false} />
         </div>
 
         {/* Actions */}

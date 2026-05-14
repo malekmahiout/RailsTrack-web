@@ -68,16 +68,6 @@ describe('Navbar', () => {
     expect(screen.getByLabelText(/RailTrack/i)).toBeInTheDocument()
   })
 
-  it('affiche le lien Rapports', () => {
-    render(<MemoryRouter><Navbar /></MemoryRouter>)
-    expect(screen.getByText('Rapports')).toBeInTheDocument()
-  })
-
-  it('affiche le lien Paramètres', () => {
-    render(<MemoryRouter><Navbar /></MemoryRouter>)
-    expect(screen.getByText('Paramètres')).toBeInTheDocument()
-  })
-
   it('affiche le bouton de déconnexion', () => {
     render(<MemoryRouter><Navbar /></MemoryRouter>)
     expect(screen.getByLabelText(/déconnecter/i)).toBeInTheDocument()

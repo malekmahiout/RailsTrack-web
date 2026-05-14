@@ -1,10 +1,15 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { groqService } from '../services/groq.js'
 
 describe('groqService', () => {
   beforeEach(() => {
     localStorage.clear()
     global.fetch = vi.fn()
+    vi.stubEnv('VITE_GROQ_API_KEY', '')
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   describe('gestion de la clé API', () => {
