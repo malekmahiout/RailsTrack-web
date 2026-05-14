@@ -18,7 +18,12 @@ function formatDateLong(iso) {
 }
 
 function stripHtml(html) {
-  return (html || '').replace(/<\/?(ul|ol|li|p|br|div|h\d)[^>]*>/gi, '\n').replace(/<[^>]*>/g, '').replace(/\n{3,}/g, '\n\n').trim()
+  return (html || '')
+    .replace(/<p><strong>Dictée du [^<]*<\/strong><\/p>/gi, '')
+    .replace(/<\/?(ul|ol|li|p|br|div|h\d)[^>]*>/gi, '\n')
+    .replace(/<[^>]*>/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
 }
 
 function escHtml(str) {
